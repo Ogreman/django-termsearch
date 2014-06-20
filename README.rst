@@ -2,7 +2,7 @@
 dj-termsearch
 =============================
 
-Simple term searches for Django CBV's.
+Simple GET-based term searches for Django CBV's.
 
 Documentation
 -------------
@@ -27,6 +27,11 @@ Add ``"termsearch"`` to your ``INSTALLED_APPS`` then just add ``TermSearchMixin`
         term = "title"
         lookup = "iexact"
     
+Check the results at::
+    
+    https://example.com/list?q=barry
+    
+
 Features
 --------
 
