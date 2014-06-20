@@ -2,6 +2,72 @@
 import operator
 
 from django.db.models import Q
+from django.core.exceptions import ImproperlyConfigured
+
+
+class _BaseSearchMixin(object):
+
+    lookup = "exact"
+
+    def get_queryset(self):
+        self.qs = super(_BaseSearchMixin, self).get_queryset()
+        q = self.request.GET.get("q")
+        if q:
+            self._apply_filters(q)
+        return self.qs
+
+    def _apply_filters(self, q):
+        raise ImproperlyConfigured("Base class implementation not supported")
+
+
+class SingleTermSearchMixin(_BaseSearchMixin):
+
+    def _apply_filters(self, q):
+        if hasattr(self, "term"):
+            self.qs = self.qs.filter(
+                **{
+                    "{0}__{1}".format(self.term, self.lookup): q,
+                }
+            )
+        else:
+            raise ImproperlyConfigured("Expected `term` attribute")
+
+
+class MultiTermSearchMixin(_BaseSearchMixin):
+
+    def _apply_filters(self, q):
+        if hasattr(self, "terms"):
+            queries = reduce(operator.or_,
+                (
+                    Q(**{
+                        "{0}__{1}".format(
+                            term, self.lookup
+                        ): q,
+                    })
+                    for term in self.terms
+                )
+            )
+            self.qs = self.qs.filter(queries)
+        else:
+            raise ImproperlyConfigured("Expected `terms` attribute")
+
+
+class MapTermSearchMixin(_BaseSearchMixin):
+
+    def _apply_filters(self, q):
+        if hasattr(self, "term_mapping"):
+            queries = Q()
+            for term, lookup in self.term_mapping.items():
+                queries.add(
+                    Q((
+                        '{0}__{1}'.format(term, lookup),
+                        q
+                    )),
+                    queries.OR
+                )
+            self.qs = self.qs.filter(queries)
+        else:
+            raise ImproperlyConfigured("Expected `term_mapping` attribute")
 
 
 class TermSearchMixin(object):
