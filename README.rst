@@ -54,8 +54,3 @@ Map each field to a lookup type::
             "author__surname": "exact",
         }
         
-
-Features
---------
-
-* TODO
