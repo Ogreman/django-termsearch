@@ -23,20 +23,20 @@ class _BaseSearchMixin(object):
 class SingleTermSearchMixin(_BaseSearchMixin):
 
     def _apply_filters(self, q):
-        if hasattr(self, "term"):
+        try:
             self.qs = self.qs.filter(
                 **{
                     "{0}__{1}".format(self.term, self.lookup): q,
                 }
             )
-        else:
+        except AttributeError:
             raise ImproperlyConfigured("Expected `term` attribute")
 
 
 class MultiTermSearchMixin(_BaseSearchMixin):
 
     def _apply_filters(self, q):
-        if hasattr(self, "terms"):
+        try:
             queries = reduce(operator.or_,
                 (
                     Q(**{
@@ -48,14 +48,14 @@ class MultiTermSearchMixin(_BaseSearchMixin):
                 )
             )
             self.qs = self.qs.filter(queries)
-        else:
+        except AttributeError:
             raise ImproperlyConfigured("Expected `terms` attribute")
 
 
 class MapTermSearchMixin(_BaseSearchMixin):
 
     def _apply_filters(self, q):
-        if hasattr(self, "term_mapping"):
+        try:
             queries = Q()
             for term, lookup in self.term_mapping.items():
                 queries.add(
@@ -66,7 +66,7 @@ class MapTermSearchMixin(_BaseSearchMixin):
                     queries.OR
                 )
             self.qs = self.qs.filter(queries)
-        else:
+        except AttributeError:
             raise ImproperlyConfigured("Expected `term_mapping` attribute")
 
 
